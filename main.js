@@ -27,6 +27,7 @@ const mapSvg = container.append('svg').attr('class', 'mapSvg')
 //---------------------------------------------------------
 // // MISCELLANEOUS VARIABLES SETUP
 
+// ...
 
 //---------------------------------------------------------
 // DATA
@@ -35,11 +36,10 @@ const mapSvg = container.append('svg').attr('class', 'mapSvg')
 // // SETUP DATA
 
 async function getData() {
-  const us = await d3.json('./data/us.json')
+  const us = await d3.json('./data/us.json'
 
-
-//---------------------------------------------------------
-// // MAP DATA
+  //---------------------------------------------------------
+  // // MAP DATA
 
   const usStates = topojson.feature(us, us.objects.states)
 

@@ -36,7 +36,7 @@ const mapSvg = container.append('svg').attr('class', 'mapSvg')
 // // SETUP DATA
 
 async function getData() {
-  const us = await d3.json('./data/us.json'
+  const us = await d3.json('./data/us.json')
 
   //---------------------------------------------------------
   // // MAP DATA

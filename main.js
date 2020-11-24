@@ -7,6 +7,13 @@ const opacity = 0.7
 const avgNum = 14
 const excludedStates = ["66", "69", "72", "78"]
 const duration = 225
+const spikeWidth = 7
+
+const interpolator = d3.interpolateRgb('#F53844', '#42378F')
+const color = d3.scaleSequential(interpolator)
+  .domain([0, 150])
+  // .domain([150, 0])
+  .clamp(true)
 
 // //------------------------------------------------------
 // // PAGE SETUP
@@ -29,6 +36,7 @@ const containerWidth = containerBounds.width
 // // MAP SETUP
 
 const mapMargin = {top: 200, right: 0, bottom: 0, left: 0}
+const spikeMax = mapMargin.top + 140
 
 const mapContainer = d3.select('#map-container')
   .style('border', '2px solid aqua')
@@ -48,6 +56,9 @@ const mapCanvas = mapContainer.append('canvas').attr('class', 'mapCanvas')
   .style("height", `${mapHeight}px`)
   .attr("width", `${mapWidth * dpi}`)
   .attr("height", `${mapHeight * dpi}`)
+
+const ctx = mapCanvas.node().getContext('2d')
+ctx.scale(dpi, dpi)
 
 // //------------------------------------------------------
 // // SVG SETUP
@@ -250,6 +261,10 @@ async function getData() {
     return max;
   }
 
+  const length = d3.scaleLinear()
+    .domain([0, maxDailyCasesCounties])
+    .range([0, spikeMax])
+
   // //------------------------------------------------------
   // // DATA: RANKING
   
@@ -264,11 +279,12 @@ async function getData() {
     return data;
   }
 
-  const keyFrames = frames.map(frame => {
+  const protoKeyFrames = frames.map(frame => {
     frame.statesRanked = rank(state => frame.states.get(state));
     return frame;
   })
-
+  const keyFrames = protoKeyFrames.slice(26)
+  const prevKF = new Map(d3.pairs(keyFrames, (a, b) => [b, a]))
   const nameFrames = d3.groups(keyFrames.flatMap(data => data.statesRanked), d => d.state)
   prev = new Map(nameFrames.flatMap(([, data]) => d3.pairs(data, (a, b) => [b, a])))
   next = new Map(nameFrames.flatMap(([, data]) => d3.pairs(data)))
@@ -328,16 +344,53 @@ async function getData() {
     return form;
   }
 
-    const scrubber = Scrubber({
-      format: ([date]) => formatDate(date),
-      delay: duration,
-      loop: false
-    })
+  const scrubber = Scrubber({
+    // format: ([date]) => formatDate(date),
+    delay: duration,
+    loop: false
+  })
 
+  const scrubSelect = d3.select(scrubber)
+    .on('input', function() { scrub(this) })
+  
   d3.select('#scrubInput').attr('max', keyFrames.length - 1)
 
-  console.log('scrubber', scrubber)
+  function scrub(form) { update(form.value) }
 
+  // //------------------------------------------------------
+  // // DRAWING: SPIKES
+
+  const draw = frame => {
+    ctx.clearRect(0, 0, mapWidth, mapHeight);
+    frame.counties.forEach((d, i) => {
+      const xPos = countyPositions.get(d[0])[0];
+      const yPos = countyPositions.get(d[0])[1];
+      ctx.beginPath();
+      ctx.moveTo(xPos - spikeWidth / 2, yPos);
+      ctx.lineTo(xPos + spikeWidth / 2, yPos);
+      ctx.lineTo(xPos, yPos - length(d[3]));
+      ctx.closePath();
+      ctx.fillStyle = color(d[2]).split(')')[0] + `, ${opacity})`;
+      ctx.fill();
+    });
+  }
+
+  const update = frame => {
+    try {
+      const prevCounties = prevKF.get(frame).counties;
+      const timer = d3.timer(elapsed => {
+        const t = Math.min(1, d3.easeLinear(elapsed / duration));
+        frame.counties.forEach((d, i) => {
+          const tweenCount = prevCounties[i][1] * (1 - t) + d[1] * t;
+          d.splice(3, 1, tweenCount);
+        });
+        draw(frame);
+        if (t === 1) timer.stop();
+      });
+    } catch {
+      frame.counties.forEach(d => d.splice(3, 1, d[1]));
+    }
+  }
 
 }
 

@@ -438,30 +438,31 @@ async function getData() {
     for (let date of frames) {
       const maxOfDay = d3.max(date.counties.map(d => d[2]));
       if (maxOfDay > max) max = maxOfDay;
-      if (maxOfDay > 250)
-        console.log(
-          // date.date,
-          // 'county: ' +
-          //   date.counties[d3.maxIndex(date.counties.map(d => d[2]))][0],
-          // 'state: ' +
-          // fipsToStateLookup.get(
-          //   date.counties[d3.maxIndex(date.counties.map(d => d[2]))][0].slice(
-          //     0,
-          //     2
-          //   )
-          // ),
-          // 'cases: ' + date.counties[d3.maxIndex(date.counties.map(d => d[2]))][1],
-          // 'pop: ' +
-          countiesPop.get(
-            date.counties[d3.maxIndex(date.counties.map(d => d[2]))][0]
-          )
-          // maxOfDay
-        );
+      // if (maxOfDay > 250)
+        // console.log(
+        //   // date.date,
+        //   // 'county: ' +
+        //   //   date.counties[d3.maxIndex(date.counties.map(d => d[2]))][0],
+        //   // 'state: ' +
+        //   // fipsToStateLookup.get(
+        //   //   date.counties[d3.maxIndex(date.counties.map(d => d[2]))][0].slice(
+        //   //     0,
+        //   //     2
+        //   //   )
+        //   // ),
+        //   // 'cases: ' + date.counties[d3.maxIndex(date.counties.map(d => d[2]))][1],
+        //   // 'pop: ' +
+        //   countiesPop.get(
+        //     date.counties[d3.maxIndex(date.counties.map(d => d[2]))][0]
+        //   )
+        //   // maxOfDay
+        // );
     }
     return max;
   }
 
   console.log('maxPerHundThouCounties', maxPerHundThouCounties)
+  console.log('maxDailyCasesCounties', maxDailyCasesCounties)
 
   const length = d3.scaleLinear()
     .domain([0, maxDailyCasesCounties])
@@ -765,6 +766,22 @@ async function getData() {
     };
   }
 
+  const formatDate = d3.utcFormat("%B %d")
+  const parseDate = d3.timeParse("%Y-%m-%d")
+
+  const ticker = svg => {
+    const now = svg.append('g').append("text")
+        .attr("transform", `translate(${mapWidth * 0.677},${mapHeight - mapHeight / 30})`)
+        // .style("font", `bold ${barSize}px var(--sans-serif)`)
+        .style("font", `bold ${10}px var(--sans-serif)`)
+        .style("font-variant-numeric", "tabular-nums")
+        .style("text-anchor", "middle")
+        .style("font-size", `${d3.min([mapWidth/20, 32])}px`)
+        .text(formatDate(parseDate(keyFrames[0].date)));
+  
+    return transition => now.text(formatDate(parseDate(transition.date)))
+  }
+
   const formatNumber = d3.format(",d")
 
   const bars = svg => {
@@ -813,7 +830,7 @@ async function getData() {
   const updateAxis = axis(chartSvg);
   const updateLabels = labels(chartSvg);
   const updateValues = values(chartSvg);
-  // const updateTicker = ticker(chartSvg);
+  const updateTicker = ticker(mapSvg);
 
   function scrub(form) {
     const keyframe = form.value
@@ -822,15 +839,18 @@ async function getData() {
       .duration(duration)
       .ease(d3.easeLinear)
 
+    // const transition2 = mapSvg.transition()
+    //   .duration(duration)
+    //   .ease(d3.easeLinear)
+
     const largestBarVal = d3.max([keyframe.statesRanked[0].value.smaRound, 1]);
     x.domain([0, largestBarVal]);
-
 
     updateAxis(keyframe, transition, largestBarVal);
     updateBars(keyframe, transition);
     updateLabels(keyframe, transition);
     updateValues(keyframe, transition);
-    // updateTicker(keyframe, transition);
+    updateTicker(keyframe, transition);
 
     update(keyframe)
   }

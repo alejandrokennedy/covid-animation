@@ -470,7 +470,9 @@ async function getData() {
 
   // const interpolator = d3.interpolateRgb('#F53844', '#42378F')
   // const interpolator = d3.piecewise(d3.interpolateHsl, ['#0000ff', '#ff3b3b', '#ff0000'])
-  const interpolator = d3.piecewise(d3.interpolateHsl, ['#0000ff', '#c9ff87', '#700000'])
+  // const interpolator = d3.piecewise(d3.interpolateHsl, ['#0400ff', '#ff0000', '#ff0000', '#ff0000', '#ff0000'])
+  const interpolator = d3.piecewise(d3.interpolateHsl, ['#0400ff', '#ff0000', '#ff5900', '#ffb300', '#ffff00'])
+  // const interpolator = d3.piecewise(d3.interpolateHsl, ['#0000ff', '#c9ff87', '#700000'])
   const color = d3.scaleSequential(interpolator)
     .domain([0, maxPerHundThouCounties])
     // .domain([0, 150])

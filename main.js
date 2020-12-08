@@ -71,6 +71,18 @@ ctx.scale(dpi, dpi)
 const mapSvg = mapContainer.append('svg').attr('class', 'mapSvg')
   .attr('viewBox', `0 0 ${mapWidth}, ${mapHeight}`)
 
+mapSvg.append('text')
+  .attr('transform', () => `translate(${mapWidth / 2},${mapMargin.top / 2})`)
+  .style('text-anchor', 'middle')
+  .style('font-size', () => d3.min([mapWidth/20, 30]))
+  .text('COVID-19 Daily New Cases')
+
+mapSvg.append('text')
+  .style('text-anchor', 'middle')
+  .style('font-size', () => d3.min([mapWidth/30, 14]))
+  .attr('transform', () => `translate(${mapWidth / 2},${mapMargin.top / 2 + 20})`)
+  .text('Two-Week Rolling Average')
+
 // //------------------------------------------------------
 // // CHART SVG SETUP
 
@@ -126,7 +138,6 @@ function legend({
 
   // Sequential
   else if (color.interpolator) {
-
     x = Object.assign(color.copy()
         .interpolator(d3.interpolateRound(marginLeft, width - marginRight)),
         {range() { return [marginLeft, width - marginRight]; }});
@@ -311,6 +322,8 @@ async function getData() {
       const popPerHundThou = data[0].county
         ? countiesPop.get(id(d)) / 100000
         : statesPop.get(d.fips) / 100000;
+        // ? countiesPop.get(id(d)) / 10000
+        // : statesPop.get(d.fips) / 10000;
   
       const perHundThou = smaRound / popPerHundThou;
   
@@ -327,7 +340,11 @@ async function getData() {
 
   // // // COVID DATA TRANSFORMATIONS
 
-  const rawStates = rawStatesUnfiltered.filter(d => !excludedStates.includes(d.fips))
+  const rawStates = rawStatesUnfiltered.filter(d => {
+    if (d.state === 'District of Columbia') d.state = 'D.C.'
+    return !excludedStates.includes(d.fips)
+  })
+
   const rawCounties = rawCountiesUnfiltered.filter(d => !excludedStates.includes(d.fips.slice(0, 2)))
   
   const states = Array.from(d3.group(rawStates, d => d.state).keys())
@@ -430,7 +447,7 @@ async function getData() {
     return max;
   }
 
-  console.log('maxDailyCasesCounties', maxDailyCasesCounties)
+  // console.log('maxDailyCasesCounties', maxDailyCasesCounties)
 
   const maxPerHundThouCounties = getMaxPerHundThouCounties()
   function getMaxPerHundThouCounties() {
@@ -478,10 +495,12 @@ async function getData() {
     // .domain([0, 150])
     // .domain([150, 0])
     .clamp(true)
+    .nice()
 
   legend({
     color: color,
     title: "New Cases Per 100,000 People",
+    // title: "New Cases Per 10,000 People",
     width: mapWidth / 1.8,
     marginLeft: 15,
     marginRight: 15
@@ -567,7 +586,6 @@ async function getData() {
   }
 
   const scrubber = Scrubber({
-    // format: ([date]) => formatDate(date),
     delay: duration,
     loop: false
   })
@@ -575,7 +593,9 @@ async function getData() {
   const scrubSelect = d3.select(scrubber)
     .on('input', function() { scrub(this) })
   
-  d3.select('#scrubInput').attr('max', keyFrames.length - 1)
+  d3.select('#scrubInput')
+    .attr('max', keyFrames.length - 1)
+    .style('width', () => `${mapWidth / 4}px`)
 
   // //------------------------------------------------------
   // // DRAWING: SPIKES
@@ -635,11 +655,14 @@ async function getData() {
     .attr('dy', '1.1em')
     .text(length.tickFormat(4, "s"))
 
+  const spikeLegendDescriptionWidth = spikeLegend.node().getBoundingClientRect().width
+
   spikeLegend.append('text')
     .attr('dy', '1.1em')
     .attr('text-anchor', 'end')
     .attr("font-weight", "bold")
-    .attr('transform', `translate(${mapWidth - 75},${mapHeight - 13})`)
+    // .attr('transform', `translate(${mapWidth - 75},${mapHeight - 13})`)
+    .attr('transform', `translate(${mapWidth - spikeLegendDescriptionWidth - 4},${mapHeight - 13})`)
     .text('New Cases')
 
   //------------------------------------------------------
@@ -647,7 +670,7 @@ async function getData() {
   // //------------------------------------------------------
   // // BARS: FUNCTIONS
 
-  const margin = { top: 10, right: 50, bottom: 6, left: 170 }
+  const margin = { top: 10, right: 50, bottom: 6, left: 100 }
 
   const x = d3.scaleLinear()
     .domain([0, 1])
@@ -778,10 +801,10 @@ async function getData() {
         .style("font", `bold ${10}px var(--sans-serif)`)
         .style("font-variant-numeric", "tabular-nums")
         .style("text-anchor", "middle")
-        .style("font-size", `${d3.min([mapWidth/20, 32])}px`)
+        .style("font-size", `${d3.min([mapWidth/22, 30])}px`)
         .text(formatDate(parseDate(keyFrames[0].date)));
-  
-    return transition => now.text(formatDate(parseDate(transition.date)))
+
+    return keyframe => now.text(formatDate(parseDate(keyframe.date)))
   }
 
   const formatNumber = d3.format(",d")
@@ -841,10 +864,6 @@ async function getData() {
       .duration(duration)
       .ease(d3.easeLinear)
 
-    // const transition2 = mapSvg.transition()
-    //   .duration(duration)
-    //   .ease(d3.easeLinear)
-
     const largestBarVal = d3.max([keyframe.statesRanked[0].value.smaRound, 1]);
     x.domain([0, largestBarVal]);
 
@@ -852,10 +871,10 @@ async function getData() {
     updateBars(keyframe, transition);
     updateLabels(keyframe, transition);
     updateValues(keyframe, transition);
-    updateTicker(keyframe, transition);
+    updateTicker(keyframe);
 
     update(keyframe)
   }
-} // getData callback
+}
 
 getData()

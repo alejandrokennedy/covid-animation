@@ -43,7 +43,8 @@ const mapBounds = mapContainer.node().getBoundingClientRect()
 const mapWidth = mapBounds.width
 const mapHeight = (mapWidth / 1.6) + mapMargin.top
 
-const spikeMax = mapMargin.top + 140
+// const spikeMax = mapMargin.top + 140
+const spikeMax = mapMargin.top + 170
 const spikeWidth = mapWidth / 90
 
 // for chart
@@ -487,9 +488,9 @@ async function getData() {
 
   // const interpolator = d3.interpolateRgb('#F53844', '#42378F')
   // const interpolator = d3.piecewise(d3.interpolateHsl, ['#0000ff', '#ff3b3b', '#ff0000'])
+  // const interpolator = d3.piecewise(d3.interpolateHsl, ['#0000ff', '#c9ff87', '#700000'])
   // const interpolator = d3.piecewise(d3.interpolateHsl, ['#0400ff', '#ff0000', '#ff0000', '#ff0000', '#ff0000'])
   const interpolator = d3.piecewise(d3.interpolateHsl, ['#0400ff', '#ff0000', '#ff5900', '#ffb300', '#ffff00'])
-  // const interpolator = d3.piecewise(d3.interpolateHsl, ['#0000ff', '#c9ff87', '#700000'])
   const color = d3.scaleSequential(interpolator)
     .domain([0, maxPerHundThouCounties])
     // .domain([0, 150])
@@ -670,7 +671,7 @@ async function getData() {
   // //------------------------------------------------------
   // // BARS: FUNCTIONS
 
-  const margin = { top: 10, right: 50, bottom: 6, left: 100 }
+  const margin = { top: 10, right: 50, bottom: 0, left: 100 }
 
   const x = d3.scaleLinear()
     .domain([0, 1])

@@ -17,12 +17,8 @@ const body = d3.select('body')
   .style('font-size', '12px')
 
 const container = d3.select('#container')
-  // .style('width', '100%')
-  // .style('height', '500px')
-  .style('max-width', '625px')
   .style('position', 'relative')
   .style('margin', '0 auto')
-  // .style('border', '2px solid orangered')
 
 const containerBounds = container.node().getBoundingClientRect()
 const containerWidth = containerBounds.width
@@ -32,38 +28,67 @@ const legendContainer = d3.select('#legendContainer')
   .style('flex-direction', 'row')
 
 // //------------------------------------------------------
+// // FLEX SETUP
+
+const mapAndControls = d3.select('#mapAndControls')
+
+const macBounds = mapAndControls.node().getBoundingClientRect()
+// console.log('macBounds', macBounds)
+
+setTimeout(() => {
+  const newMacBounds = mapAndControls.node().getBoundingClientRect()
+  const newMapBounds = mapContainer.node().getBoundingClientRect()
+  console.log('newMapBounds', newMapBounds)
+  // console.log('newMacBounds', newMacBounds)
+
+  // setMapSizes(newMapBounds, newMacBounds)
+
+}, 1)
+
+// //------------------------------------------------------
 // // MAP SETUP
 
-const mapMargin = {top: 200, right: 0, bottom: 0, left: 0}
-
+///////////
 const mapContainer = d3.select('#map-container')
-  // .style('border', '2px solid aqua')
+const mapCanvas = mapContainer.append('canvas').attr('class', 'mapCanvas')
+
+const ctx = mapCanvas.node().getContext('2d')
+
+const dpi = window.devicePixelRatio
 
 const mapBounds = mapContainer.node().getBoundingClientRect()
-const mapWidth = mapBounds.width
-const mapHeight = (mapWidth / 1.6) + mapMargin.top
+console.log('mapBounds', mapBounds)
 
-// const spikeMax = mapMargin.top + 140
-const spikeMax = mapMargin.top + 170
-const spikeWidth = mapWidth / 90
+let mapWidth
+let justMapHeight
+let mapMarginTop
+let mapMargin
+let mapHeight
+let spikeMax
+let spikeWidth
 
-// for chart
-const width = mapWidth
-const height = 900
+function setMapSizes(bounds, macBounds) {
+  mapWidth = bounds.width
+  justMapHeight = mapWidth / 1.6
+  mapMarginTop = macBounds.height - 50 - justMapHeight
+  mapMargin = {top: mapMarginTop, right: 0, bottom: 0, left: 0}
+  mapHeight = macBounds.height - 50
+  spikeMax = mapMargin.top + 210
+  spikeWidth = mapWidth / 90
+
+  mapCanvas
+    .style('position', 'absolute')
+    .style("width", `${mapWidth}px`)
+    .style("height", `${mapHeight}px`)
+    .attr("width", `${mapWidth * dpi}`)
+    .attr("height", `${mapHeight * dpi}`)
+}
+
+setMapSizes(mapBounds, macBounds)
 
 // //------------------------------------------------------
 // // CANVAS SETUP
 
-const dpi = window.devicePixelRatio
-
-const mapCanvas = mapContainer.append('canvas').attr('class', 'mapCanvas')
-  .style('position', 'absolute')
-  .style("width", `${mapWidth}px`)
-  .style("height", `${mapHeight}px`)
-  .attr("width", `${mapWidth * dpi}`)
-  .attr("height", `${mapHeight * dpi}`)
-
-const ctx = mapCanvas.node().getContext('2d')
 ctx.scale(dpi, dpi)
 
 // //------------------------------------------------------
@@ -87,10 +112,19 @@ mapSvg.append('text')
 // //------------------------------------------------------
 // // CHART SVG SETUP
 
-const chartSvg = d3.select('#chart-container').append('svg')
+const chartContainer = d3.select('#chart-container')
+// .style('width', '400px')
+// .style('flex-grow', 1)
+
+const chartContainerBounds = chartContainer.node().getBoundingClientRect()
+
+const width = chartContainerBounds.width
+const height = 900
+
+const chartSvg = chartContainer.append('svg')
   .attr('id', 'chartSvg')
   .attr('viewBox', `0 0 ${width} ${height}`)
-  // .style('border', '2px solid gold')
+  .style('margin', '10 0 0 0')
 
 // //------------------------------------------------------
 // // COLOR LEGEND SETUP
@@ -252,6 +286,18 @@ function ramp(color, n = 256) {
 
 async function getData() {
   const us = await d3.json('./data/us.json')
+
+  const usStates = topojson.feature(us, us.objects.states)
+  const projection = d3.geoAlbersUsa().fitExtent([[0, mapMargin.top], [mapWidth, mapHeight]], usStates)
+  const path = d3.geoPath().projection(projection)
+
+  mapSvg.append('path')
+    .datum(topojson.mesh(us, us.objects.states))
+    .attr('stroke', '#aaa')
+    .attr('fill', 'none')
+    .attr('d', path)
+    .attr('stroke-linejoin', 'round');
+
   const rawCountiesUnfiltered = await d3.csv('https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv')
   const rawStatesUnfiltered = await d3.csv('https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-states.csv')
   const statePop = await d3.csv('./data/statePop.csv')
@@ -264,23 +310,6 @@ async function getData() {
     let str = d.id.toString()
     d.id = str.length === 4 ? '0'.concat(str) : str
   })
-
-  const usStates = topojson.feature(us, us.objects.states)
-  const projection = d3.geoAlbersUsa().fitExtent([[0, mapMargin.top], [mapWidth, mapHeight]], usStates)
-  const path = d3.geoPath().projection(projection)
-
-  // mapSvg.append('path')
-  // .append('path')
-  //   .datum(topojson.feature(us, us.objects.nation))
-  //   .attr('d', path)
-    // .attr('fill', 'none');
-
-  mapSvg.append('path')
-    .datum(topojson.mesh(us, us.objects.states))
-    .attr('stroke', '#aaa')
-    .attr('fill', 'none')
-    .attr('d', path)
-    .attr('stroke-linejoin', 'round');
 
   // //------------------------------------------------------
   // // COVID DATA
@@ -646,7 +675,7 @@ async function getData() {
   const spikeLegendGs = spikeLegend.selectAll('g')
     .data(length.ticks(4).slice(1).reverse())
    .join('g')
-    .attr('transform', (d, i) => `translate(${mapWidth + 10 - (i + 1) * 15},${mapHeight - 13})`)
+    .attr('transform', (d, i) => `translate(${mapWidth + 7 - (i + 1) * 15},${mapHeight - 13})`)
 
   spikeLegendGs.append('path')
     .style('opacity', opacity)
@@ -663,7 +692,7 @@ async function getData() {
     .attr('text-anchor', 'end')
     .attr("font-weight", "bold")
     // .attr('transform', `translate(${mapWidth - 75},${mapHeight - 13})`)
-    .attr('transform', `translate(${mapWidth - spikeLegendDescriptionWidth - 4},${mapHeight - 13})`)
+    .attr('transform', `translate(${mapWidth - spikeLegendDescriptionWidth - 5},${mapHeight - 13})`)
     .text('New Cases')
 
   //------------------------------------------------------

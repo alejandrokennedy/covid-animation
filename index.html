@@ -6,28 +6,31 @@
   <title>covid-animation</title>
   <script src='https://unpkg.com/d3@6.2.0/dist/d3.min.js'></script>
   <script src='https://unpkg.com/topojson@3.0.2/dist/topojson.js'></script>
+  <link rel="stylesheet" href="./main.css">
 </head>
 <body>
   <div id="container">
-    <div id="map-container"></div>
-    <div id="legendContainer">
-      <div id="colorContainer"></div>
-      <div id="dateCounter">
-        <form id="scrubberForm" style="font: 12px var(--sans-serif); font-variant-numeric: tabular-nums; display: flex; height: 20px; align-items: center;">
-          <button name=b id="playBTN" type=button style="width: 5em;"></button>
-          <label style="display: grid; align-items: center;">
-            <input id="scrubInput" name=i type=range min=0 max=5 value=0 step=1>
-          </label>
-        </form>
-        <!-- <div id="select-dropdown">
-          <label for="sort-select">Sort by:</label>
-          <select name="sort" id="sort-select">
-              <option value="cases">Cases</option>
-              <option value="perc">Per Capita??</option>
-          </select>
-        </div>   -->
+    <div id="mapAndControls">
+      <div id="map-container"></div>
+      <div id="legendContainer">
+        <div id="colorContainer"></div>
+        <div id="dateCounter">
+          <form id="scrubberForm" style="font: 12px var(--sans-serif); font-variant-numeric: tabular-nums; display: flex; height: 20px; align-items: center;">
+            <button name=b id="playBTN" type=button style="width: 5em;"></button>
+            <label style="display: grid; align-items: center;">
+              <input id="scrubInput" name=i type=range min=0 max=5 value=0 step=1>
+            </label>
+          </form>
+          <!-- <div id="select-dropdown">
+            <label for="sort-select">Sort by:</label>
+            <select name="sort" id="sort-select">
+                <option value="cases">Cases</option>
+                <option value="perc">Per Capita??</option>
+            </select>
+          </div>   -->
+        </div>
       </div>
-    </div>
+  </div>
 
     <div id="chart-container"></div>
   </div>

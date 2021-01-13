@@ -2,6 +2,7 @@
   /* border: 3px solid green; */
   display: flex;
   flex-wrap: wrap;
+  width: calc(100vw - 10px);
 }
 
 #mapAndControls {

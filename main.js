@@ -15,81 +15,47 @@ const body = d3.select('body')
   .style('margin', '0 auto')
   .style('font-family', 'helvetica')
   .style('font-size', '12px')
+  .style('overflow', 'auto')
 
 const container = d3.select('#container')
   .style('position', 'relative')
   .style('margin', '0 auto')
 
-const containerBounds = container.node().getBoundingClientRect()
-const containerWidth = containerBounds.width
-
 const legendContainer = d3.select('#legendContainer')
   .style('display', 'flex')
   .style('flex-direction', 'row')
 
-// //------------------------------------------------------
-// // FLEX SETUP
-
-const mapAndControls = d3.select('#mapAndControls')
-
-const macBounds = mapAndControls.node().getBoundingClientRect()
-// console.log('macBounds', macBounds)
-
-setTimeout(() => {
-  const newMacBounds = mapAndControls.node().getBoundingClientRect()
-  const newMapBounds = mapContainer.node().getBoundingClientRect()
-  console.log('newMapBounds', newMapBounds)
-  // console.log('newMacBounds', newMacBounds)
-
-  // setMapSizes(newMapBounds, newMacBounds)
-
-}, 1)
 
 // //------------------------------------------------------
 // // MAP SETUP
 
-///////////
 const mapContainer = d3.select('#map-container')
-const mapCanvas = mapContainer.append('canvas').attr('class', 'mapCanvas')
-
-const ctx = mapCanvas.node().getContext('2d')
-
-const dpi = window.devicePixelRatio
-
 const mapBounds = mapContainer.node().getBoundingClientRect()
-console.log('mapBounds', mapBounds)
+const macBounds = d3.select('#mapAndControls').node().getBoundingClientRect()
+const mapWidth = mapBounds.width
+const justMapHeight = mapWidth / 1.6
+const mapMarginTop = macBounds.height - 50 - justMapHeight
+const mapMargin = {top: mapMarginTop, right: 0, bottom: 0, left: 0}
+const mapHeight = macBounds.height - 50
+const spikeMax = mapMargin.top + 210
+const spikeWidth = mapWidth / 90
 
-let mapWidth
-let justMapHeight
-let mapMarginTop
-let mapMargin
-let mapHeight
-let spikeMax
-let spikeWidth
-
-function setMapSizes(bounds, macBounds) {
-  mapWidth = bounds.width
-  justMapHeight = mapWidth / 1.6
-  mapMarginTop = macBounds.height - 50 - justMapHeight
-  mapMargin = {top: mapMarginTop, right: 0, bottom: 0, left: 0}
-  mapHeight = macBounds.height - 50
-  spikeMax = mapMargin.top + 210
-  spikeWidth = mapWidth / 90
-
-  mapCanvas
-    .style('position', 'absolute')
-    .style("width", `${mapWidth}px`)
-    .style("height", `${mapHeight}px`)
-    .attr("width", `${mapWidth * dpi}`)
-    .attr("height", `${mapHeight * dpi}`)
-}
-
-setMapSizes(mapBounds, macBounds)
 
 // //------------------------------------------------------
 // // CANVAS SETUP
 
+const dpi = window.devicePixelRatio
+
+const mapCanvas = mapContainer.append('canvas').attr('class', 'mapCanvas')
+  .style('position', 'absolute')
+  .style("width", `${mapWidth}px`)
+  .style("height", `${mapHeight}px`)
+  .attr("width", `${mapWidth * dpi}`)
+  .attr("height", `${mapHeight * dpi}`)
+
+const ctx = mapCanvas.node().getContext('2d')
 ctx.scale(dpi, dpi)
+
 
 // //------------------------------------------------------
 // // MAP SVG SETUP
@@ -113,14 +79,9 @@ mapSvg.append('text')
 // // CHART SVG SETUP
 
 const chartContainer = d3.select('#chart-container')
-// .style('width', '400px')
-// .style('flex-grow', 1)
-
 const chartContainerBounds = chartContainer.node().getBoundingClientRect()
-
 const width = chartContainerBounds.width
 const height = 900
-
 const chartSvg = chartContainer.append('svg')
   .attr('id', 'chartSvg')
   .attr('viewBox', `0 0 ${width} ${height}`)
@@ -515,15 +476,9 @@ async function getData() {
     .domain([0, maxDailyCasesCounties])
     .range([0, spikeMax])
 
-  // const interpolator = d3.interpolateRgb('#F53844', '#42378F')
-  // const interpolator = d3.piecewise(d3.interpolateHsl, ['#0000ff', '#ff3b3b', '#ff0000'])
-  // const interpolator = d3.piecewise(d3.interpolateHsl, ['#0000ff', '#c9ff87', '#700000'])
-  // const interpolator = d3.piecewise(d3.interpolateHsl, ['#0400ff', '#ff0000', '#ff0000', '#ff0000', '#ff0000'])
   const interpolator = d3.piecewise(d3.interpolateHsl, ['#0400ff', '#ff0000', '#ff5900', '#ffb300', '#ffff00'])
   const color = d3.scaleSequential(interpolator)
     .domain([0, maxPerHundThouCounties])
-    // .domain([0, 150])
-    // .domain([150, 0])
     .clamp(true)
     .nice()
 
@@ -691,7 +646,6 @@ async function getData() {
     .attr('dy', '1.1em')
     .attr('text-anchor', 'end')
     .attr("font-weight", "bold")
-    // .attr('transform', `translate(${mapWidth - 75},${mapHeight - 13})`)
     .attr('transform', `translate(${mapWidth - spikeLegendDescriptionWidth - 5},${mapHeight - 13})`)
     .text('New Cases')
 
@@ -725,7 +679,6 @@ async function getData() {
       xAxis.ticks(min > max ? max : min);
   
       g.transition(transition).call(xAxis);
-      // g.select('.tick:first-of-type text').remove();
       g.selectAll('.tick line').attr('stroke', 'white');
       g.select('.domain').remove();
     };
@@ -827,7 +780,6 @@ async function getData() {
   const ticker = svg => {
     const now = svg.append('g').append("text")
         .attr("transform", `translate(${mapWidth * 0.677},${mapHeight - mapHeight / 30})`)
-        // .style("font", `bold ${barSize}px var(--sans-serif)`)
         .style("font", `bold ${10}px var(--sans-serif)`)
         .style("font-variant-numeric", "tabular-nums")
         .style("text-anchor", "middle")

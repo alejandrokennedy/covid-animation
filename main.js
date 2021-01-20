@@ -30,13 +30,16 @@ const legendContainer = d3.select('#legendContainer')
 // // MAP SETUP
 
 const mapContainer = d3.select('#map-container')
-const mapBounds = mapContainer.node().getBoundingClientRect()
+// const mapBounds = mapContainer.node().getBoundingClientRect()
+
 const macBounds = d3.select('#mapAndControls').node().getBoundingClientRect()
-const mapWidth = mapBounds.width
+
+let mapWidth = macBounds.width
+let mapHeight = macBounds.height - 60
+
 const justMapHeight = mapWidth / 1.6
 const mapMarginTop = macBounds.height - 50 - justMapHeight
 const mapMargin = {top: mapMarginTop, right: 0, bottom: 0, left: 0}
-const mapHeight = macBounds.height - 50
 const spikeMax = mapMargin.top + 210
 const spikeWidth = mapWidth / 90
 
@@ -48,20 +51,45 @@ const dpi = window.devicePixelRatio
 
 const mapCanvas = mapContainer.append('canvas').attr('class', 'mapCanvas')
   .style('position', 'absolute')
-  .style("width", `${mapWidth}px`)
-  .style("height", `${mapHeight}px`)
-  .attr("width", `${mapWidth * dpi}`)
-  .attr("height", `${mapHeight * dpi}`)
+// resizeCanvas()
 
+function resizeCanvas() {
+  // console.log('mapWidth', mapWidth)
+  // console.log('mapHeight', mapHeight)
+  mapCanvas
+    .style("width", `${mapWidth}px`)
+    .style("height", `${mapHeight}px`)
+    .attr("width", `${mapWidth * dpi}`)
+    .attr("height", `${mapHeight * dpi}`)
+}
+
+resizeCanvas()
 const ctx = mapCanvas.node().getContext('2d')
 ctx.scale(dpi, dpi)
+
+// //------------------------------------------------------
+// // RESIZE OBSERVER
+
+// document.addEventListener('DOMContentLoaded', () => {
+  let resizer = new ResizeObserver(handleResize)
+  resizer.observe(document.querySelector('#mapAndControls'))
+
+// })
+
+function handleResize(entries) {
+  // mapWidth = entries[0].contentRect.width
+  // mapHeight = entries[0].contentRect.height - 50
+  // resizeCanvas()
+}
 
 
 // //------------------------------------------------------
 // // MAP SVG SETUP
 
 const mapSvg = mapContainer.append('svg').attr('class', 'mapSvg')
-  .attr('viewBox', `0 0 ${mapWidth}, ${mapHeight}`)
+  // .attr('viewBox', `0 0 ${mapWidth}, ${mapHeight}`)
+  .attr('width', mapWidth)
+  .attr('height', mapHeight)
 
 mapSvg.append('text')
   .attr('transform', () => `translate(${mapWidth / 2},${mapMargin.top / 2})`)
@@ -84,7 +112,9 @@ const width = chartContainerBounds.width
 const height = 900
 const chartSvg = chartContainer.append('svg')
   .attr('id', 'chartSvg')
-  .attr('viewBox', `0 0 ${width} ${height}`)
+  // .attr('viewBox', `0 0 ${width} ${height}`)
+  .attr('width', width)
+  .attr('height', height)
   .style('margin', '10 0 0 0')
 
 // //------------------------------------------------------
